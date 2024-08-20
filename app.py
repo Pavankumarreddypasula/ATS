@@ -39,7 +39,9 @@ def convert_pdf_to_image_online(uploaded_file):
         ]
         return pdf_parts
     else:
+        st.write("API response:", response.content)  # Print out the API response for debugging
         raise Exception("Failed to convert PDF to image using Cloudmersive API")
+
 
 # Function to get the response from Gemini API
 def get_gemini_response(input_text, pdf_content, prompt):
