@@ -15,6 +15,7 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # Streamlit App Configuration (only called once)
 st.set_page_config(page_title="ATS Resume Expert")
+st.write("Using Cloudmersive API Key:", os.getenv("CLOUDMERSIVE_API_KEY"))
 
 # Function to convert PDF to image using Cloudmersive API
 def convert_pdf_to_image_online(uploaded_file):
