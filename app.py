@@ -4,7 +4,7 @@ import base64
 from dotenv import load_dotenv
 import streamlit as st
 from PIL import Image
-import pdf2image
+import requests
 import google.generativeai as genai
 
 # Load environment variables
@@ -16,18 +16,21 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 # Streamlit App Configuration (only called once)
 st.set_page_config(page_title="ATS Resume Expert")
 
-# Function to convert PDF to image and prepare it for model input
-def input_pdf_setup(uploaded_file):
-    if uploaded_file is not None:
-        # Convert the PDF to images
-        images = pdf2image.convert_from_bytes(uploaded_file.read())
-        first_page = images[0]
+# Function to convert PDF to image using Cloudmersive API
+def convert_pdf_to_image_online(uploaded_file):
+    url = "https://api.cloudmersive.com/pdf/convert/to/png"
+    headers = {"Apikey": os.getenv("CLOUDMERSIVE_API_KEY")}
+    files = {"file": uploaded_file}
 
-        # Convert the first page to bytes and encode as base64
+    response = requests.post(url, headers=headers, files=files)
+    if response.status_code == 200:
+        img_data = io.BytesIO(response.content)
+        image = Image.open(img_data)
+        
         img_byte_arr = io.BytesIO()
-        first_page.save(img_byte_arr, format='JPEG')
+        image.save(img_byte_arr, format='JPEG')
         img_byte_arr = img_byte_arr.getvalue()
-
+        
         pdf_parts = [
             {
                 "mime_type": "image/jpeg",
@@ -36,7 +39,7 @@ def input_pdf_setup(uploaded_file):
         ]
         return pdf_parts
     else:
-        raise FileNotFoundError("No file uploaded")
+        raise Exception("Failed to convert PDF to image using Cloudmersive API")
 
 # Function to get the response from Gemini API
 def get_gemini_response(input_text, pdf_content, prompt):
@@ -70,12 +73,12 @@ submit1 = st.button("Tell Me About the Resume")
 submit3 = st.button("Percentage Match")
 
 if submit1 and uploaded_file:
-    pdf_content = input_pdf_setup(uploaded_file)
+    pdf_content = convert_pdf_to_image_online(uploaded_file)
     response = get_gemini_response(input_text, pdf_content, input_prompt1)
     st.subheader("The Response is")
     st.write(response)
 elif submit3 and uploaded_file:
-    pdf_content = input_pdf_setup(uploaded_file)
+    pdf_content = convert_pdf_to_image_online(uploaded_file)
     response = get_gemini_response(input_text, pdf_content, input_prompt3)
     st.subheader("The Response is")
     st.write(response)
