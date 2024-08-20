@@ -15,6 +15,29 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # Streamlit App Configuration (only called once)
 st.set_page_config(page_title="ATS Resume Expert")
+import requests
+import io
+from PIL import Image
+import streamlit as st
+
+def convert_pdf_to_image_online(uploaded_file):
+    url = "https://api.cloudmersive.com/pdf/convert/to/png"
+    headers = {"Apikey": "YOUR_CLOUDMERSIVE_API_KEY"}
+    files = {"file": uploaded_file}
+
+    response = requests.post(url, headers=headers, files=files)
+    if response.status_code == 200:
+        img_data = io.BytesIO(response.content)
+        image = Image.open(img_data)
+        return [image]  # Return a list of images
+    else:
+        raise Exception("Failed to convert PDF to image online")
+
+uploaded_file = st.file_uploader("Upload your resume (PDF)...", type=["pdf"])
+if uploaded_file is not None:
+    images = convert_pdf_to_image_online(uploaded_file)
+    st.image(images[0], caption='First page of the PDF')
+
 
 # Function to convert PDF to image and prepare it for model input
 def input_pdf_setup(uploaded_file):
